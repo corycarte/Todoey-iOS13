@@ -8,9 +8,8 @@
 
 import UIKit
 import RealmSwift
-import SwipeCellKit
 
-class CategoryViewController: UITableViewController {
+class CategoryViewController: SwipeTableViewController {
     let realm = try! Realm() // Can throw on first call. Safe call exists within AppDelegate.swift
     
     let defaults = UserDefaults.standard
@@ -20,9 +19,11 @@ class CategoryViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        tableView.rowHeight = 80
+        tableView.separatorStyle = .none
         loadData()
     }
-
+    
     //MARK: - IBAction
     @IBAction func addButtonPressed(_ sender: UIBarButtonItem) {
         let alert = UIAlertController(title: "Add New Todoey Category", message: "", preferredStyle: .alert)
@@ -30,7 +31,7 @@ class CategoryViewController: UITableViewController {
         
         let action = UIAlertAction(title: "Add Category", style: .default) { (action) in
             // What heppens once user clicks Add button
-
+            
             if textField.text! != "" {
                 // Set up new category
                 let newCategory = Category()
@@ -57,10 +58,9 @@ class CategoryViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { return categoryList?.count ?? 1 }
     
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: K.categoryCellId, for: indexPath)
+        let cell = super.tableView(tableView, cellForRowAt: indexPath)
         
         cell.textLabel?.text = categoryList?[indexPath.row].name ?? "No Categories"
-        
         return cell
     }
     
@@ -85,7 +85,7 @@ class CategoryViewController: UITableViewController {
     // READ
     func loadData() {
         categoryList = realm.objects(Category.self)
-
+        
         tableView.reloadData()
     }
     
@@ -97,6 +97,19 @@ class CategoryViewController: UITableViewController {
             }
         } catch {
             print("save category error: \(error)")
+        }
+    }
+    
+    //MARK: - Delete Data from swipe
+    override func updateModel(at indexPath: IndexPath) {
+        if let deleteCategory = categoryList?[indexPath.row] {
+            do {
+                try realm.write {
+                    realm.delete(deleteCategory)
+                }
+            } catch {
+                print("Delete category error: \(error)")
+            }
         }
     }
 }
